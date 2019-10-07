@@ -1,6 +1,6 @@
 [arm.mps2-cm3]
 type = target
-path = target/mps2-cm3
+path = target/arm.mps2-cm3
 depends = CMSDK_CM3,tl.leos
 cmflags = BOOT_PAGE_SIZE=2048
 short = ARM MPS2 dev board
