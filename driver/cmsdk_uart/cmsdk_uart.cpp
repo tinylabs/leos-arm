@@ -7,6 +7,7 @@
  */
 
 #include "header_78e34888.h"
+#include <leos/iChar.h>
 
 class cmsdk_uart : public iChar {
 
@@ -29,6 +30,7 @@ public:
 EXPORT_OBJ (cmsdk_uart, NORMAL);
 
 cmsdk_uart::cmsdk_uart (int idx, int cnt, va_list ap)
+  : iChar (idx)
 {
 
 }

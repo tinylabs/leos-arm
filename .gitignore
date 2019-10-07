@@ -1,0 +1,6 @@
+.repo/
+build/
+device/
+kernel/
+auto.cmake
+package.db

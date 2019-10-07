@@ -11,4 +11,4 @@ type = driver
 iface = UART
 sig = 78e34888
 path = driver/cmsdk_uart
-
+short = CMSDK UART driver
