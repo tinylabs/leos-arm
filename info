@@ -2,7 +2,7 @@
 type = target
 path = target/mps2-cm3
 depends = CMSDK_CM3,tl.leos
-cmake = BOOT_PAGE_SIZE=2048
+cmflags = BOOT_PAGE_SIZE=2048
 short = ARM MPS2 dev board
 long = Cortex-M3 on FPGA, QEMU support
 
