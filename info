@@ -1,0 +1,7 @@
+[mps2-cm3]
+type = target
+path = target/mps2-cm3
+depends = CMSDK_CM3,tl.leos
+short = ARM MPS2 dev board
+long = Cortex-M3 on FPGA, QEMU support
+
