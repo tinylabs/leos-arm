@@ -1,4 +1,4 @@
-[mps2-cm3]
+[arm.mps2-cm3]
 type = target
 path = target/mps2-cm3
 depends = CMSDK_CM3,tl.leos
