@@ -14,7 +14,7 @@ project( leos-arm )
 include( UseLeOS )
 
 # Add targets here
-#add_subdirectory( target/name )
+add_subdirectory( target/mps2-cm3 )
 
 # Add testing target
 leos_check ()

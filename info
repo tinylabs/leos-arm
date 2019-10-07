@@ -2,7 +2,13 @@
 type = target
 path = target/mps2-cm3
 depends = CMSDK_CM3,tl.leos
-cmflags = BOOT_PAGE_SIZE=2048
+cmflags = QEMU_MACHINE=mps2-an385,BOOT_PAGE_SIZE=2048
 short = ARM MPS2 dev board
 long = Cortex-M3 on FPGA, QEMU support
+
+[arm.cmsdk_uart]
+type = driver
+iface = UART
+sig = 78e34888
+path = driver/cmsdk_uart
 
