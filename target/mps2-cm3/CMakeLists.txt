@@ -1,9 +1,9 @@
 #
-# cmake for arm.mps2-cm3
+# cmake for mps2-cm3
 #
 
 # Define target
-leos_target( arm.mps2-cm3 )
+leos_target( mps2-cm3 )
 
 # Add automatic dependencies
 include( ./auto.cmake )
@@ -15,5 +15,12 @@ include( ./auto.cmake )
 leos_fs( pin.map /cfg )
 
 # Create binary image
-leos_image( arm.mps2-cm3
-  leos "RAM=2Q RSZ=1M IRQ=0" )
+leos_image(
+  mps2-cm3
+  leos
+  "INIT=/bin/init EXEC=/bin/blink"
+  )
+
+# Setup debug targets
+leos_qemu_target( mps2-cm3 )
+leos_jlink_target( mps2-cm3 )
