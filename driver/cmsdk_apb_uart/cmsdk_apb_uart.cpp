@@ -13,6 +13,7 @@ class cmsdk_uart : public iChar {
 
  private:
   reg_t *reg;
+  char *pname, *irqs, *pins;
 
 public:
   cmsdk_uart (int idx, int cnt, va_list ap);
@@ -32,7 +33,23 @@ EXPORT_OBJ (cmsdk_uart, NORMAL);
 cmsdk_uart::cmsdk_uart (int idx, int cnt, va_list ap)
   : iChar (idx)
 {
+  // Count should be at least 3
+  if (cnt < 3)
+    return;
 
+  // Get name (not used)
+  pname = (char *)va_arg (ap, char *);
+
+  // Get register base
+  reg = (reg_t *)va_arg (ap, uint32_t);
+
+  // Get IRQs and parse
+  irqs = (char *)va_arg (ap, char *);
+
+  
+  // Pins not used...
+  //if (cnt >= 4)
+  //  pins = (char *)va_arg (ap, char *);
 }
 
 int cmsdk_uart::Setup (const char *args)
