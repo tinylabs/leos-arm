@@ -1,5 +1,5 @@
 /**
- *  CMSDK UART driver - Used on ARM MPS2/3 dev boards
+ *  CMSDK APB UART driver - Used on ARM MPS2/3 dev boards
  *
  *  All rights reserved.
  *  Tiny Labs Inc
@@ -8,17 +8,24 @@
 
 #include "header_78e34888.h"
 #include <leos/iChar.h>
+#include "leos.h"
 
-class cmsdk_uart : public iChar {
+class cmsdk_apb_uart : public iChar {
 
  private:
   reg_t *reg;
-  char *pname, *irqs, *pins;
-
+  clk_node_t clk;
+  ISR_TRAMP tramp[2];
+  uint8_t rx_irq, tx_irq;
+  
 public:
-  cmsdk_uart (int idx, int cnt, va_list ap);
-  ~cmsdk_uart () {}
+  cmsdk_apb_uart (int idx, int cnt, va_list ap);
+  ~cmsdk_apb_uart () {}
 
+  // ISRs
+  void TxISR (void);
+  void RxISR (void);
+  
   // Common functions
   int Setup (const char *args);
   void Cleanup (void);
@@ -28,47 +35,119 @@ public:
   int Write (const void *buf, int len);
 };
 
-EXPORT_OBJ (cmsdk_uart, NORMAL);
+EXPORT_OBJ (cmsdk_apb_uart, NORMAL);
 
-cmsdk_uart::cmsdk_uart (int idx, int cnt, va_list ap)
+cmsdk_apb_uart::cmsdk_apb_uart (int idx, int cnt, va_list ap)
   : iChar (idx)
 {
+  char *irqs;
+  int rv, tmp;
+  
   // Count should be at least 3
   if (cnt < 3)
     return;
 
-  // Get name (not used)
-  pname = (char *)va_arg (ap, char *);
-
+  // Get name and convert to clk
+  clk = leos_clock_node ((char *)va_arg (ap, char *));
+  
   // Get register base
   reg = (reg_t *)va_arg (ap, uint32_t);
 
   // Get IRQs and parse
   irqs = (char *)va_arg (ap, char *);
 
+  // Init tramps
+  ISR_INIT_TRAMP (&tramp[0], &cmsdk_apb_uart::TxISR);
+  ISR_INIT_TRAMP (&tramp[1], &cmsdk_apb_uart::RxISR);
+
+  // Save IRQs
+  rv = leos_parse_int (irqs, "RX=", &tmp);
+  rx_irq = tmp;
+  rv |= leos_parse_int (irqs, "TX=", &tmp);
+  tx_irq = tmp;
+  if (rv)
+    return;
+
+  // Success
+  initd = 1;
+}
+
+int cmsdk_apb_uart::Setup (const char *args)
+{
+  int rv;
+  uint32_t baudrate;
+
+  // Check IRQs
+  if (!initd)
+    return -1;
   
-  // Pins not used...
-  //if (cnt >= 4)
-  //  pins = (char *)va_arg (ap, char *);
+  // Ignore mode, only 8N1 supported
+
+  // Init rxbuf/txbuf
+  // Get baudrate
+  rv = leos_parse_uint (args, "baud=", &baudrate);
+  if (rv)
+    return -1;
+
+  // Install IRQs
+  leos_irq_isr (tx_irq, &tramp[0]);
+  leos_irq_isr (rx_irq, &tramp[1]);
+
+  // Setup divisor
+  reg->BAUDDIV = leos_clock_freq (clk) / baudrate;
+
+  // Enable interrupts
+  reg->CTRL.RXINT = 1;
+  reg->CTRL.TXINT = 1;
+  
+  // Enable UART
+  reg->CTRL.RXEN = 1;
+  reg->CTRL.TXEN = 1;
+  return 0;
 }
 
-int cmsdk_uart::Setup (const char *args)
+void cmsdk_apb_uart::Cleanup (void)
+{
+  // Disable UART
+  reg->CTRL.TXEN = 0;
+  reg->CTRL.RXEN = 0;
+  
+  // Disable interrupts
+  reg->CTRL.RXINT = 0;
+  reg->CTRL.TXINT = 0;
+
+  // Uninstall interrupt routines
+}
+
+int cmsdk_apb_uart::Read (void *buf, int len)
 {
   return 0;
 }
 
-void cmsdk_uart::Cleanup (void)
+int cmsdk_apb_uart::Write (const void *buf, int len)
+{
+  int i;
+  const char *cbuf = (const char *)buf;
+  for (i = 0; i < len; i++) {
+    // Wait for transmitter to be ready
+    while (reg->STATE.TXBF)
+      ;
+    // Send next character
+    reg->DATA = cbuf[i];
+  }
+  
+  return len;
+}
+
+// RX IRQ handler
+void cmsdk_apb_uart::RxISR (void)
 {
 
 }
 
-int cmsdk_uart::Read (void *buf, int len)
+// TX IRQ handler
+void cmsdk_apb_uart::TxISR (void)
 {
-  return 0;
-}
 
-int cmsdk_uart::Write (const void *buf, int len)
-{
-  return 0;
 }
 
