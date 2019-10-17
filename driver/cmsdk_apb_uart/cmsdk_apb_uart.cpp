@@ -15,7 +15,7 @@ class cmsdk_apb_uart : public iChar {
  private:
   reg_t *reg;
   clk_node_t clk;
-  ISR_TRAMP tramp[2];
+  ISR_TRAMP rx_trmp, tx_trmp;
   uint8_t rx_irq, tx_irq;
   
 public:
@@ -41,14 +41,14 @@ cmsdk_apb_uart::cmsdk_apb_uart (int idx, int cnt, va_list ap)
   : iChar (idx)
 {
   char *irqs;
-  int rv, tmp;
+  int rv;
   
   // Count should be at least 3
   if (cnt < 3)
     return;
 
   // Get name and convert to clk
-  clk = leos_clock_node ((char *)va_arg (ap, char *));
+  clk = k_clock_node ((char *)va_arg (ap, char *));
   
   // Get register base
   reg = (reg_t *)va_arg (ap, uint32_t);
@@ -57,41 +57,49 @@ cmsdk_apb_uart::cmsdk_apb_uart (int idx, int cnt, va_list ap)
   irqs = (char *)va_arg (ap, char *);
 
   // Init tramps
-  ISR_INIT_TRAMP (&tramp[0], &cmsdk_apb_uart::TxISR);
-  ISR_INIT_TRAMP (&tramp[1], &cmsdk_apb_uart::RxISR);
+  ISR_INIT_TRAMP (&tx_trmp, &cmsdk_apb_uart::TxISR);
+  ISR_INIT_TRAMP (&rx_trmp, &cmsdk_apb_uart::RxISR);
 
   // Save IRQs
-  rv = leos_parse_int (irqs, "RX=", &tmp);
-  rx_irq = tmp;
-  rv |= leos_parse_int (irqs, "TX=", &tmp);
-  tx_irq = tmp;
+  rv = k_parse_uint8 (irqs, "RX=", &rx_irq);
+  rv |= k_parse_uint8 (irqs, "TX=", &tx_irq);
   if (rv)
     return;
 
   // Success
-  initd = 1;
+  valid = 1;
 }
 
 int cmsdk_apb_uart::Setup (const char *args)
 {
   int rv;
   uint32_t baudrate;
-
-  // Check IRQs
-  if (!initd)
-    return -1;
+  char *mode;
   
-  // Ignore mode, only 8N1 supported
+  // Check IRQs
+  if (!valid)
+    return -1;
+
+  // Parse mode
+  rv = leos_parse_str (args, "mode=", &mode);
+  if (rv)
+    return -1;
+
+  // Only 8N1 supported
+  rv = strcmp (mode, "8N1");
+  leos_free (mode);
+  if (rv)
+    return -1;
 
   // Init rxbuf/txbuf
   // Get baudrate
   rv = leos_parse_uint (args, "baud=", &baudrate);
-  if (rv)
+  if (rv || !baudrate)
     return -1;
 
   // Install IRQs
-  leos_irq_isr (tx_irq, &tramp[0]);
-  leos_irq_isr (rx_irq, &tramp[1]);
+  leos_irq_isr (tx_irq, &tx_trmp);
+  leos_irq_isr (rx_irq, &rx_trmp);
 
   // Setup divisor
   reg->BAUDDIV = leos_clock_freq (clk) / baudrate;
@@ -117,6 +125,8 @@ void cmsdk_apb_uart::Cleanup (void)
   reg->CTRL.TXINT = 0;
 
   // Uninstall interrupt routines
+  leos_irq_isr (tx_irq, NULL);
+  leos_irq_isr (rx_irq, NULL);
 }
 
 int cmsdk_apb_uart::Read (void *buf, int len)

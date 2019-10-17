@@ -14,7 +14,8 @@ int main (int argc, char **argv)
   iChar *uart = (iChar *)leos_load ("UART.0");
 
   // Setup UART
-  uart->Setup ("mode=8N1 baud=115200");
+  if (uart->Setup ("mode=8N1 baud=115200"))
+    return -1;
 
   // Write to UART
   uart->Write ("Hello World", 12);
