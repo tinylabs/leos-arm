@@ -13,6 +13,13 @@ sig = 78e34888
 path = driver/cmsdk_apb_uart
 short = CMSDK UART driver
 
+[arm.cmsdk_sysctl]
+type = driver
+iface = Sysctl
+sig = a7c12a92
+path = driver/cmsdk_sysctl
+short = CMSDK sys/clk driver
+
 [tl.uart_test]
 type = app
 path = app/uart_test

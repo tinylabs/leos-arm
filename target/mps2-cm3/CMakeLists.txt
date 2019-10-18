@@ -18,7 +18,7 @@ leos_fs( pin.map /cfg )
 leos_image(
   mps2-cm3
   leos
-  "EXEC=/bin/uart_test"
+  "EXEC=/bin/uart_test OSCCLK0=50m OSCCLK1=24576k OSCCLK2=25m"
   )
 
 # Setup debug targets
