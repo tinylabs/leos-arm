@@ -49,7 +49,7 @@ int cmsdk_sysctl::Setup (const char *args)
   uint32_t val;
 
   // Make system call to map clock tree
-  rv = leos_clock_map ("/cfg/mps2_map.bcf");
+  rv = leos_clock_map ("/cfg/mps2_clock.bcf");
   if (rv)
     return rv;
 
@@ -78,16 +78,44 @@ uint32_t cmsdk_sysctl::ClkGet (hwnode_t node)
   switch (node) {
     case C_OSCCLK0:
       return oscclk[0];
-      break;
       
     case C_OSCCLK1:
       return oscclk[1];
-      break;
 
     case C_OSCCLK2:
       return oscclk[2];
-      break;
 
+    // These are fixed prescalers set to 2
+    case C_SYSCLK:
+    case C_DBGCLK:
+    case C_SPICLCD:
+    case C_SPICON:
+    case C_I2CCLCD:
+    case C_I2CAUD:
+    case C_AUDMCLK:
+      return 2;
+
+    // Fixed prescaler of 8
+    case C_AUDSCLK:
+      return 8;
+
+    // These are all gates and always enabled - return 1
+    case C_TIMER0:
+    case C_TIMER1:
+    case C_DUALTIMER:
+    case C_UART0:
+    case C_UART1:
+    case C_UART2:
+    case C_UART3:
+    case C_UART4:
+    case C_WDT:
+    case C_GPIO0:
+    case C_GPIO1:
+    case C_SPI:
+      return 1;
+
+    // Unknown or NULL clock return 0
+    case C_NULL:
     default:
       return 0;
   }
@@ -96,6 +124,8 @@ uint32_t cmsdk_sysctl::ClkGet (hwnode_t node)
 int cmsdk_sysctl::ClkSet (hwnode_t node, uint32_t val)
 {
   switch (node) {
+    // These root nodes depend on external inputs
+    // Must be set at boot
     case C_OSCCLK0:
       oscclk[0] = val;
       break;
@@ -108,19 +138,45 @@ int cmsdk_sysctl::ClkSet (hwnode_t node, uint32_t val)
       oscclk[2] = val;
       break;
 
+    // These are all fixed and cannot be set
+    case C_SYSCLK:
+    case C_DBGCLK:
+    case C_SPICLCD:
+    case C_SPICON:
+    case C_I2CCLCD:
+    case C_I2CAUD:
+    case C_AUDMCLK:
+    case C_AUDSCLK:
+    case C_TIMER0:
+    case C_TIMER1:
+    case C_DUALTIMER:
+    case C_UART0:
+    case C_UART1:
+    case C_UART2:
+    case C_UART3:
+    case C_UART4:
+    case C_WDT:
+    case C_GPIO0:
+    case C_GPIO1:
+    case C_SPI:
+    case C_NULL:
     default:
       return -1;
   }
+
+  // Success
   return 0;
 }
 
 int cmsdk_sysctl::Reset (hwnode_t node)
 {
-  return 0;
+  // Cannot reset any hardware
+  return -1;
 }
 
 int cmsdk_sysctl::ResetReason (void)
 {
+  // Reset reason unknown
   return -1;
 }
 
