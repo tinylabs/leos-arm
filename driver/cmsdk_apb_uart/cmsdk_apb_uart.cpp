@@ -100,7 +100,9 @@ int cmsdk_apb_uart::Setup (const char *args)
   // Install IRQs
   leos_irq_isr (tx_irq, &tx_trmp);
   leos_irq_isr (rx_irq, &rx_trmp);
-
+  leos_irq_pri (tx_irq, 1);
+  leos_irq_pri (rx_irq, 1);
+    
   // Setup divisor
   reg->BAUDDIV = leos_clock_freq (clk) / baudrate;
 
@@ -131,7 +133,18 @@ void cmsdk_apb_uart::Cleanup (void)
 
 int cmsdk_apb_uart::Read (void *buf, int len)
 {
-  return 0;
+  int i;
+  char *cbuf = ( char *)buf;
+
+  for (i = 0; i < len; i++) {
+    // Wait for transmitter to be ready
+    while (reg->STATE.RXBF == 0)
+      ;
+    // Read next character
+    cbuf[i] = reg->DATA;
+  }
+  
+  return len;
 }
 
 int cmsdk_apb_uart::Write (const void *buf, int len)
