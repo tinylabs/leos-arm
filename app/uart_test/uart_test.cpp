@@ -10,16 +10,23 @@
 
 int main (int argc, char **argv)
 {
-  // Open UART
+  // Open UARTs
   iChar *uart = (iChar *)leos_load ("UART.0");
-
-  // Setup UART
   if (uart->Setup ("mode=8N1 baud=115200"))
     return -1;
 
   // Write to UART
-  uart->Write ("Hello World", 12);
+  uart->Write ("Hello UART0\n", 12);
 
+  // Run loopback
+  while (1) {
+    uint8_t c;
+    uart->Read (&c, 1);
+    if (c == 4) // Break on control-d
+      break;
+    uart->Write (&c, 1);
+  }
+  
   // Unload
   leos_unload (uart);
   return 0;
