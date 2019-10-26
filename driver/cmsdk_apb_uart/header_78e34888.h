@@ -62,7 +62,7 @@ typedef struct {
       REG32 TXINT        : 1; /* RW: TX Interrupt Enable */
       REG32 RXINT        : 1; /* RW: RX Interrupt Enable */
       REG32 TXOVINT      : 1; /* RW: TX Overrun Interrupt Enable */
-      REG32 RVOVINT      : 1; /* RW: RX Overrun Interrupt Enable */
+      REG32 RXOVINT      : 1; /* RW: RX Overrun Interrupt Enable */
       REG32 HSTX         : 1; /* RW: High Speed Test Mode for TX only */
     };
   };

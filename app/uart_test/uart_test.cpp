@@ -20,11 +20,11 @@ int main (int argc, char **argv)
 
   // Run loopback
   while (1) {
-    uint8_t c;
-    uart->Read (&c, 1);
-    if (c == 4) // Break on control-d
+    uint8_t c[1];
+    uart->Read (c, 1);
+    if (c[0] == 4) // Break on control-d
       break;
-    uart->Write (&c, 1);
+    uart->Write (c, 1);
   }
   
   // Unload
